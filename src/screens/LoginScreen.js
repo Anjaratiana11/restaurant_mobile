@@ -1,14 +1,15 @@
 import React, { useState } from "react";
-import { TextInput, Button, View, Text, StyleSheet, Alert } from "react-native";
+import { TextInput, View, Text, StyleSheet, Alert } from "react-native";
 import { login } from "../services/FirebaseService";
 import { useNavigation } from "@react-navigation/native";
+import CustomButton from "../components/atoms/Button"; // Utilisation du bouton personnalisé
 
 const LoginScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigation = useNavigation(); // Hook de navigation
+  const navigation = useNavigation();
 
   const handleLogin = async () => {
     setLoading(true);
@@ -16,16 +17,13 @@ const LoginScreen = () => {
     console.log("Tentative de connexion avec :", email);
 
     try {
-      const result = await login(email, password); // Récupère directement l'idToken
+      const result = await login(email, password);
       console.log("Connexion réussie :", result);
 
-      const { idToken } = result; // Déstructure idToken directement depuis le résultat
-
+      const { idToken } = result;
       if (idToken) {
         console.log("idToken récupéré :", idToken);
         Alert.alert("Connexion réussie", "Vous êtes connecté avec succès !");
-
-        // Navigue vers PlatsScreen en passant l'idToken
         navigation.navigate("PlatsScreen", { idToken });
       } else {
         console.error("Erreur : idToken non trouvé !");
@@ -53,7 +51,12 @@ const LoginScreen = () => {
         value={password}
         onChangeText={setPassword}
       />
-      <Button title="Se connecter" onPress={handleLogin} disabled={loading} />
+      {/* Remplacement de l'ancien Button par CustomButton */}
+      <CustomButton
+        title="Se connecter"
+        onPress={handleLogin}
+        disabled={loading}
+      />
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
@@ -79,4 +82,3 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
- 

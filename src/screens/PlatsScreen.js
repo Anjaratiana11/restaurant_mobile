@@ -5,10 +5,11 @@ import {
   FlatList,
   ActivityIndicator,
   StyleSheet,
+  TouchableOpacity,
 } from "react-native";
 import { getPlats } from "../services/SymfonyService";
 
-const PlatsScreen = ({ route }) => {
+const PlatsScreen = ({ route, navigation }) => {
   const { idToken } = route.params || {}; // Récupère l'idToken depuis la navigation
 
   console.log("PlatsScreen - idToken reçu :", idToken);
@@ -49,6 +50,12 @@ const PlatsScreen = ({ route }) => {
     return <Text style={styles.error}>{error}</Text>;
   }
 
+  // Fonction pour naviguer vers PlatDetailsScreen
+  const handlePlatPress = (platId) => {
+    // Naviguer vers l'écran PlatDetailsScreen et passer l'ID du plat
+    navigation.navigate("PlatDetailsScreen", { platId });
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.tokenContainer}>
@@ -60,12 +67,14 @@ const PlatsScreen = ({ route }) => {
         data={plats}
         keyExtractor={(item) => (item.id ? item.id.toString() : "default-key")} // Vérifie que `item.id` est défini
         renderItem={({ item }) => (
-          <View style={styles.item}>
-            <Text style={styles.title}>{item.nom || "Nom inconnu"}</Text>
-            <Text>
-              Temps de préparation : {item.tempsDePreparation || "N/A"} sec
-            </Text>
-          </View>
+          <TouchableOpacity onPress={() => handlePlatPress(item.id)}>
+            <View style={styles.item}>
+              <Text style={styles.title}>{item.nom || "Nom inconnu"}</Text>
+              <Text>
+                Temps de préparation : {item.tempsDePreparation || "N/A"} sec
+              </Text>
+            </View>
+          </TouchableOpacity>
         )}
       />
     </View>

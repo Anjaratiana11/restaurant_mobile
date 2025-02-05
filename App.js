@@ -4,7 +4,8 @@ import { createStackNavigator } from "@react-navigation/stack";
 import LoginScreen from "./src/screens/LoginScreen";
 import HomeScreen from "./src/screens/HomeScreen";
 import SignupScreen from "./src/screens/SignupScreen";
-import PlatsScreen from "./src/screens/PlatsScreen"; // Importation du nouvel écran
+import PlatsScreen from "./src/screens/PlatsScreen";
+import PlatDetailsScreen from "./src/screens/PlatDetailsScreen";
 
 const Stack = createStackNavigator();
 
@@ -31,6 +32,11 @@ export default function App() {
           name="PlatsScreen"
           component={PlatsScreen}
           options={{ title: "Liste des Plats" }}
+        />
+        <Stack.Screen
+          name="PlatDetailsScreen"
+          component={PlatDetailsScreen}
+          options={{ title: "Details du Plat" }}
         />
       </Stack.Navigator>
     </NavigationContainer>
