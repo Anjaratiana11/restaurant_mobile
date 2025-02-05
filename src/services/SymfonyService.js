@@ -99,5 +99,103 @@ const getIngredientDetails = async (ingredientId) => {
     throw new Error("Impossible de récupérer les détails de l'ingrédient");
   }
 };
+/**
+ * Récupère l'ID de la commande actuelle de l'utilisateur.
+ */
+const getCommandeActuelle = async (userId) => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/utilisateur/${userId}/commandeActu`
+    );
+    return response.data.idCommande; // Récupère l'ID de la commande
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération de la commande actuelle:",
+      error
+    );
+    throw new Error("Impossible de récupérer la commande actuelle");
+  }
+};
 
-export { getPlats, getPlatDetails, getPlatsIngredients, getIngredientDetails };
+/**
+ * Envoie une nouvelle commande (ajout d'un plat à la commande).
+ */
+const ajouterPlatCommande = async (idCommande, idPlat, quantite) => {
+  try {
+    const response = await axios.post(`${API_URL}/detailsCommande/multi`, {
+      idCommande,
+      idPlat,
+      quantite,
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Erreur lors de l'ajout du plat à la commande:", error);
+    throw new Error("Impossible d'ajouter le plat à la commande");
+  }
+};
+
+/**
+ * Récupère les détails de la commande par son ID.
+ */
+const getCommandeDetails = async (idCommande) => {
+  try {
+    const response = await axios.get(
+      `${API_URL}/commande/${idCommande}/detailsCommande` // Correction ici
+    );
+    return response.data; // Retourne la liste des plats de la commande
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération des détails de la commande:",
+      error
+    );
+    throw new Error("Impossible de récupérer la commande");
+  }
+};
+
+export const validerCommande = async (idCommande) => {
+  try {
+    const response = await fetch(
+      `${API_URL}/api/paiement/${idCommande}/valider`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    // Lire la réponse brute
+    const text = await response.text();
+    console.log("Réponse brute de l'API :", text);
+
+    // Vérifier si la réponse est bien un JSON avant de la parser
+    try {
+      const data = JSON.parse(text);
+      if (response.ok) {
+        return data;
+      } else {
+        throw new Error(
+          data.message || "Erreur lors de la validation de la commande"
+        );
+      }
+    } catch (jsonError) {
+      throw new Error("La réponse de l'API n'est pas un JSON valide.");
+    }
+  } catch (error) {
+    console.error("Erreur dans validerCommande:", error);
+    throw new Error(
+      error.message || "Erreur inconnue lors de la validation de la commande"
+    );
+  }
+};
+
+export {
+  getPlats,
+  getPlatDetails,
+  getPlatsIngredients,
+  getIngredientDetails,
+  getCommandeActuelle,
+  ajouterPlatCommande,
+  getCommandeDetails,
+};

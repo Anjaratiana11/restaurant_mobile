@@ -7,23 +7,26 @@ import {
   Button,
   Modal,
   TextInput,
+  FlatList,
 } from "react-native";
 import {
   getPlatDetails,
   getPlatsIngredients,
   getIngredientDetails,
-} from "../services/SymfonyService"; // Assurez-vous que le chemin vers votre service est correct
+  getCommandeActuelle,
+  ajouterPlatCommande,
+} from "../services/SymfonyService"; // Assurez-vous que le chemin est correct
 
-const PlatDetailsScreen = ({ route }) => {
-  const { platId } = route.params; // Récupère l'ID du plat depuis la navigation
+const PlatDetailsScreen = ({ route, navigation }) => {
+  const { platId } = route.params;
   console.log("Plat ID reçu :", platId);
 
   const [plat, setPlat] = useState(null);
   const [ingredients, setIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [isModalVisible, setIsModalVisible] = useState(false); // Gérer l'état de la pop-up
-  const [quantite, setQuantite] = useState(""); // Gérer la quantité
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [quantite, setQuantite] = useState("");
 
   useEffect(() => {
     const fetchPlatDetails = async () => {
@@ -31,25 +34,18 @@ const PlatDetailsScreen = ({ route }) => {
         setLoading(true);
         setError("");
 
-        // Récupérer les détails du plat
         const platData = await getPlatDetails(platId);
-        console.log("Réponse de l'API pour le plat :", platData);
-        if (!platData) {
-          throw new Error("Détails du plat non trouvés");
-        }
+        if (!platData) throw new Error("Détails du plat non trouvés");
         setPlat(platData);
 
-        // Récupérer les ingrédients du plat
         const ingredientsIds = await getPlatsIngredients(platId);
         if (!ingredientsIds || ingredientsIds.length === 0) {
           throw new Error("Aucun ingrédient trouvé pour ce plat");
         }
 
-        // Récupérer les détails des ingrédients
         const ingredientsDetails = await Promise.all(
           ingredientsIds.map(async (ingredientId) => {
-            const ingredientData = await getIngredientDetails(ingredientId);
-            return ingredientData;
+            return await getIngredientDetails(ingredientId);
           })
         );
         setIngredients(ingredientsDetails);
@@ -64,10 +60,39 @@ const PlatDetailsScreen = ({ route }) => {
     fetchPlatDetails();
   }, [platId]);
 
-  const handleCommander = () => {
-    // Ici, tu peux ajouter la logique pour traiter la commande
-    console.log(`Commande passée pour ${plat.nom} avec ${quantite} unités`);
-    setIsModalVisible(false); // Fermer la pop-up après la commande
+  const handleCommander = async () => {
+    try {
+      if (!quantite || isNaN(quantite) || parseInt(quantite) <= 0) {
+        alert("Veuillez entrer une quantité valide !");
+        return;
+      }
+
+      if (!plat) {
+        alert("Erreur : Impossible de commander un plat inconnu.");
+        return;
+      }
+
+      const userId = 1; // Remplace avec l'ID réel de l'utilisateur connecté
+      const idCommande = await getCommandeActuelle(userId);
+
+      if (!idCommande) {
+        alert("Aucune commande en cours trouvée !");
+        return;
+      }
+
+      await ajouterPlatCommande(idCommande, plat.id, parseInt(quantite));
+
+      alert(`Le plat ${plat.nom} a été ajouté à votre commande !`);
+
+      setQuantite(""); // Remettre la quantité à zéro
+      setIsModalVisible(false);
+
+      // 🔹 Naviguer vers CommandeScreen après l'alerte
+      navigation.navigate("CommandeScreen", { idCommande });
+    } catch (error) {
+      console.error("Erreur de commande :", error);
+      alert("Erreur lors de la commande. Veuillez réessayer.");
+    }
   };
 
   if (loading) {
@@ -86,15 +111,13 @@ const PlatDetailsScreen = ({ route }) => {
           <Text>Temps de préparation: {plat.tempsDePreparation} sec</Text>
 
           <Text style={styles.subtitle}>Ingrédients :</Text>
-          {ingredients.length > 0 ? (
-            ingredients.map((ingredient) => (
-              <Text key={ingredient.id}>{ingredient.nom}</Text>
-            ))
-          ) : (
-            <Text>Aucun ingrédient trouvé</Text>
-          )}
+          <FlatList
+            data={ingredients}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => <Text>{item.nom}</Text>}
+            ListEmptyComponent={<Text>Aucun ingrédient trouvé</Text>}
+          />
 
-          {/* Bouton pour afficher la pop-up de commande */}
           <Button title="Commander" onPress={() => setIsModalVisible(true)} />
         </View>
       )}
