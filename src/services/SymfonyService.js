@@ -212,6 +212,31 @@ export const deleteDetailCommande = async (idDetail) => {
   }
 };
 
+// Service pour récupérer le prix d'un plat
+export const getPrixPlat = async (idPlat) => {
+  try {
+    const response = await axios.get(`${API_URL}/plat/${idPlat}/prix`);
+    return response.data.montant;
+  } catch (error) {
+    console.error("Erreur lors de la récupération du prix du plat", error);
+    throw error;
+  }
+};
+
+// Service pour récupérer la somme d'une commande
+export const getSommeCommande = async (idCommande) => {
+  try {
+    const response = await axios.get(`${API_URL}/commande/${idCommande}/total`);
+    return response.data.total;
+  } catch (error) {
+    console.error(
+      "Erreur lors de la récupération du total de la commande",
+      error
+    );
+    throw error;
+  }
+};
+
 export {
   getPlats,
   getPlatDetails,

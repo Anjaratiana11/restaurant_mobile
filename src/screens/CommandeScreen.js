@@ -15,7 +15,9 @@ import {
   getCommandeActuelle,
   validerCommande,
   deleteDetailCommande,
-} from "../services/SymfonyService"; // Import des services
+  getPrixPlat, 
+  getSommeCommande,
+} from "../services/SymfonyService";
 import { FontAwesome } from "@expo/vector-icons";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -59,21 +61,19 @@ const CommandeScreen = ({ route }) => {
           throw new Error("Aucun plat dans cette commande");
         }
 
-        // Récupération des détails de chaque plat
+        // Récupération des détails de chaque plat et de son prix
         const platsDetails = await Promise.all(
           detailsCommande.map(async (item) => {
             const plat = await getPlatDetails(item.idPlat);
-            return { ...plat, id: item.id, statut: item.statut };
+            const prix = await getPrixPlat(item.idPlat); // Récupération du prix du plat
+            return { ...plat, prix, id: item.id, statut: item.statut };
           })
         );
 
         setPlats(platsDetails);
 
-        // Calcul du total de la commande
-        const totalPrice = platsDetails.reduce(
-          (sum, plat) => sum + plat.prix,
-          0
-        );
+        // Calcul du total de la commande en utilisant getSommeCommande
+        const totalPrice = await getSommeCommande(idCommande);
         setTotal(totalPrice);
       } catch (err) {
         setError(err.message || "Erreur inconnue");
