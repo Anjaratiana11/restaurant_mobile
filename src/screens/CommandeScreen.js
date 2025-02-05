@@ -6,16 +6,23 @@ import {
   ActivityIndicator,
   StyleSheet,
   Button,
+  TouchableOpacity,
+  Alert,
 } from "react-native";
 import {
   getCommandeDetails,
   getPlatDetails,
   getCommandeActuelle,
   validerCommande,
+  deleteDetailCommande,
 } from "../services/SymfonyService"; // Import des services
+import { FontAwesome } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 
 const CommandeScreen = ({ route }) => {
   const userId = 1; // Identifiant utilisateur
+  const navigation = useNavigation();
 
   const [idCommande, setIdCommande] = useState(null);
   const [plats, setPlats] = useState([]);
@@ -79,30 +86,63 @@ const CommandeScreen = ({ route }) => {
     fetchCommandeDetails();
   }, [idCommande]);
 
- const handleValiderCommande = async () => {
-   console.log("Bouton Payer cliqué, ID de commande :", idCommande);
+  const handleValiderCommande = async () => {
+    console.log("Bouton Payer cliqué, ID de commande :", idCommande);
 
-   if (!idCommande) {
-     alert("Aucune commande à valider.");
-     return;
-   }
+    if (!idCommande) {
+      alert("Aucune commande à valider.");
+      return;
+    }
 
-   try {
-     const response = await validerCommande(idCommande);
-     console.log("Réponse API :", response);
+    try {
+      const response = await validerCommande(idCommande);
+      console.log("Réponse API :", response);
 
-     if (response.statut === 0) {
-       alert(response.message); // Affiche "Commande validée avec succès"
-     } else {
-       alert("Une erreur est survenue lors de la validation de la commande.");
-     }
-   } catch (error) {
-     alert(
-       error.message || "Erreur inconnue lors de la validation de la commande"
-     );
-     console.error(error);
-   }
- };
+      if (response.statut === 0) {
+        alert(response.message); // Affiche "Commande validée avec succès"
+      } else {
+        alert("Une erreur est survenue lors de la validation de la commande.");
+      }
+    } catch (error) {
+      alert(
+        error.message || "Erreur inconnue lors de la validation de la commande"
+      );
+      console.error(error);
+    }
+  };
+
+  const handleDeleteDetail = async (idDetail) => {
+    Alert.alert(
+      "Supprimer ce plat",
+      "Êtes-vous sûr de vouloir supprimer ce plat de votre commande ?",
+      [
+        {
+          text: "Annuler",
+          style: "cancel",
+        },
+        {
+          text: "Supprimer",
+          onPress: async () => {
+            try {
+              await deleteDetailCommande(idDetail); // Appel API pour supprimer le détail
+              setPlats((prevPlats) =>
+                prevPlats.filter((item) => item.id !== idDetail)
+              );
+              // Mise à jour du total après suppression
+              const newTotal = plats.reduce(
+                (sum, plat) => (plat.id !== idDetail ? sum + plat.prix : sum),
+                0
+              );
+              setTotal(newTotal);
+            } catch (error) {
+              alert("Erreur lors de la suppression du plat.");
+              console.error(error);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   // Affichage pendant le chargement
   if (loading) {
@@ -126,6 +166,9 @@ const CommandeScreen = ({ route }) => {
           <View style={styles.item}>
             <Text style={styles.itemName}>{item.nom}</Text>
             <Text style={styles.itemPrice}>{item.prix} Ar</Text>
+            <TouchableOpacity onPress={() => handleDeleteDetail(item.id)}>
+              <FontAwesome name="trash" size={20} color="red" />
+            </TouchableOpacity>
           </View>
         )}
       />
@@ -135,6 +178,14 @@ const CommandeScreen = ({ route }) => {
         <Text style={styles.totalText}>Total :</Text>
         <Text style={styles.totalAmount}>{total} Ar</Text>
       </View>
+
+      <Ionicons
+        name="add-circle"
+        size={60}
+        color="blue"
+        style={styles.floatingButton}
+        onPress={() => navigation.navigate("PlatsScreen")}
+      />
 
       {/* Bouton pour valider la commande */}
       <Button title="Payer" onPress={handleValiderCommande} color="#4CAF50" />
@@ -157,6 +208,7 @@ const styles = StyleSheet.create({
   item: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: "#ccc",

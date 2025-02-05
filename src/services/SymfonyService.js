@@ -155,15 +155,12 @@ const getCommandeDetails = async (idCommande) => {
 
 export const validerCommande = async (idCommande) => {
   try {
-    const response = await fetch(
-      `${API_URL}/api/paiement/${idCommande}/valider`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const response = await fetch(`${API_URL}/paiement/${idCommande}/valider`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
     // Lire la réponse brute
     const text = await response.text();
@@ -187,6 +184,31 @@ export const validerCommande = async (idCommande) => {
     throw new Error(
       error.message || "Erreur inconnue lors de la validation de la commande"
     );
+  }
+};
+
+export const deleteDetailCommande = async (idDetail) => {
+  try {
+    const response = await fetch(`${API_URL}/detailsCommande/${idDetail}`, {
+      method: "DELETE",
+    });
+
+    // Vérifie si la réponse a un statut OK
+    if (!response.ok) {
+      throw new Error("Échec de la suppression du plat");
+    }
+
+    // Si la réponse est vide, retourne une réponse vide ou une confirmation
+    const data = await response.text();
+    if (!data) {
+      return { statut: 0, message: "Plat supprimé avec succès." };
+    }
+
+    // Parse la réponse JSON si elle est disponible
+    const jsonData = JSON.parse(data);
+    return jsonData;
+  } catch (error) {
+    throw new Error(error.message || "Erreur lors de la suppression du plat");
   }
 };
 
